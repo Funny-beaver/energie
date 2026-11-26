@@ -184,6 +184,14 @@ $("importFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new 
     save();$("backupMsg").textContent="Données restaurées ✓";renderRappel();}
   catch(err){$("backupMsg").textContent="Ce fichier n'est pas une sauvegarde de l'app.";}
   e.target.value="";};r.readAsText(f);};
-if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
+if("serviceWorker" in navigator){
+  const hadController=!!navigator.serviceWorker.controller;let reloading=false;
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+    reg.update().catch(()=>{});
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")reg.update().catch(()=>{});});
+  }).catch(()=>{});
+  // une nouvelle version vient de s'installer : on recharge une fois (les données restent)
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController&&!reloading){reloading=true;location.reload();}});
+}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
 load();if(!Array.isArray(state.bons))state.bons=[];save();show("noter");celebrate();checkReminder();setInterval(checkReminder,30000);
