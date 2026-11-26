@@ -6,9 +6,11 @@ Une petite app douce pour noter son énergie chaque jour (de 1 😴 à 5 😄), 
 - Fonctionne hors ligne une fois installée.
 - 3 boutons : Noter, Calendrier, Rappel.
 
+👉 **Ouvrir l'app : https://funny-beaver.github.io/energie/**
+
 ## Installer sur iPhone
 
-1. Ouvrir l'adresse de l'app dans **Safari**.
+1. Ouvrir https://funny-beaver.github.io/energie/ dans **Safari**.
 2. Toucher **Partager**, puis **Sur l'écran d'accueil**.
 3. Ouvrir l'app depuis son icône (pas depuis Safari) : c'est là que les données sont gardées.
 
