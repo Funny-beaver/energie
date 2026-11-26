@@ -1,10 +1,9 @@
 const LEVELS=[
-  {n:1,e:"😢",l:"Pas d'énergie",c:"#FFD3B5"},
-  {n:2,e:"😊",l:"Bien",c:"#FFE7A3"},
-  {n:3,e:"😎",l:"Au top",c:"#C9EBC3"},
-  {n:4,e:"🫨",l:"Submergé",c:"#DCCDF4"}
+  {n:1,a:"↓",e:"🪫",l:"J'ai pas d'énergie",c:"#FFD3B5"},
+  {n:2,a:"=",e:"😊",l:"OK, neutre",c:"#DCCDF4"},
+  {n:3,a:"↑",e:"😎",l:"J'ai de l'énergie",c:"#C9EBC3"}
 ];
-const KEY="energie-v2"; // v2 = échelle à 4 états ; les notes v1 (1 à 5) sont effacées
+const KEY="energie-v3"; // v3 = 3 états (1 ↓, 2 =, 3 ↑)
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -16,8 +15,13 @@ let state={days:{},examples:false,rem:{on:true,time:"20:00"},lastRem:""};
 function load(){
   try{const old=JSON.parse(localStorage.getItem("energie-v1"));
     if(old){if(old.rem&&/^\d{2}:\d{2}$/.test(old.rem.time))state.rem={on:!!old.rem.on,time:old.rem.time};localStorage.removeItem("energie-v1");}}catch(e){}
+  try{const v2=JSON.parse(localStorage.getItem("energie-v2"));
+    if(v2&&!localStorage.getItem(KEY)){ // 4 états -> 3 : 1,2,3 gardés ; 4 (Submergé) effacé
+      const days={};for(const k in (v2.days||{})){const v=+v2.days[k];if(v>=1&&v<=3)days[k]=v;}
+      state=Object.assign(state,v2,{days});localStorage.setItem(KEY,JSON.stringify(state));}
+    if(v2)localStorage.removeItem("energie-v2");}catch(e){}
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.days)state=Object.assign(state,s);}catch(e){}
-  for(const k in state.days){const v=state.days[k];if(!(v>=1&&v<=4))delete state.days[k];}
+  for(const k in state.days){const v=state.days[k];if(!(v>=1&&v<=3))delete state.days[k];}
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function seed(){ // exemples : un cycle doux de 7 jours, pour voir le calendrier rempli
@@ -29,10 +33,10 @@ function seed(){ // exemples : un cycle doux de 7 jours, pour voir le calendrier
 
 function levelButtons(container,onPick,current){
   container.innerHTML="";
-  LEVELS.forEach(L=>{
+  LEVELS.slice().reverse().forEach(L=>{
     const b=document.createElement("button");b.className="lvl";b.style.background=L.c;
     b.setAttribute("aria-pressed",current===L.n?"true":"false");
-    b.innerHTML=`<span class="emo">${L.e}</span><span class="num">${L.n}</span><span class="lab">${L.l}</span>`;
+    b.innerHTML=`<span class="emo">${L.e}</span><span class="num" aria-hidden="true">${L.a}</span><span class="lab">${L.l}</span>`;
     b.onclick=()=>onPick(L.n);container.appendChild(b);
   });
 }
@@ -63,27 +67,27 @@ function renderCal(){
     if(date>new Date()){b.disabled=true;b.style.opacity=.4;}
     b.onclick=()=>openPicker(date);g.appendChild(b);
   }
-  $("legend").innerHTML=LEVELS.map(L=>`<span><i class="dot"></i>${L.n} ${L.e}</span>`).join("");
+  $("legend").innerHTML=LEVELS.map(L=>`<span><i class="dot"></i>${L.a} ${L.e}</span>`).join("");
   $("legend").querySelectorAll(".dot").forEach((d,i)=>d.style.background=LEVELS[i].c);
   renderCycles();
   $("exampleNote").hidden=!state.examples;
 }
 function renderCycles(){
-  const cnt=DOW.map(()=>[0,0,0,0,0]);const t=new Date();
+  const cnt=DOW.map(()=>[0,0,0,0]);const t=new Date();
   for(let i=0;i<56;i++){const d=new Date(t);d.setDate(t.getDate()-i);const v=state.days[iso(d)];
-    if(v>=1&&v<=4){const w=(d.getDay()+6)%7;cnt[w][v]++;cnt[w][0]++;}}
+    if(v>=1&&v<=3){const w=(d.getDay()+6)%7;cnt[w][v]++;cnt[w][0]++;}}
   const bars=$("bars");bars.innerHTML="";
   cnt.forEach((c,w)=>{const col=document.createElement("div");col.className="bar";
     const st=document.createElement("div");st.className="stack4";
-    [4,3,2,1].forEach(n=>{if(!c[n])return;const seg=document.createElement("i");seg.style.background=LEVELS[n-1].c;seg.style.height=(c[n]/c[0]*100)+"%";st.appendChild(seg);});
+    [3,2,1].forEach(n=>{if(!c[n])return;const seg=document.createElement("i");seg.style.background=LEVELS[n-1].c;seg.style.height=(c[n]/c[0]*100)+"%";st.appendChild(seg);});
     const lab=document.createElement("small");lab.textContent=DOW[w];col.appendChild(st);col.appendChild(lab);bars.appendChild(col);});
   const days=cnt.filter(c=>c[0]).length;
   if(days<3){$("insight").textContent="Note quelques jours pour voir tes cycles.";return;}
   const best=n=>{let bi=-1,br=0;cnt.forEach((c,w)=>{if(c[0]&&c[n]/c[0]>br){br=c[n]/c[0];bi=w;}});return bi;};
-  const parts=[];const low=best(1),over=best(4);
-  if(low>=0)parts.push(LEVELS[0].e+" Pas d'énergie surtout le "+DOWL[low]+".");
-  if(over>=0)parts.push(LEVELS[3].e+" Submergé surtout le "+DOWL[over]+".");
-  $("insight").textContent=parts.join(" ")||"Pas de jour plus difficile repéré.";
+  const parts=[];const low=best(1),high=best(3);
+  if(low>=0)parts.push("↓ "+LEVELS[0].e+" Moins d'énergie surtout le "+DOWL[low]+".");
+  if(high>=0)parts.push("↑ "+LEVELS[2].e+" Plus d'énergie surtout le "+DOWL[high]+".");
+  $("insight").textContent=parts.join(" ")||"Pas de jour qui se démarque.";
 }
 let pickDate=null;
 function openPicker(date){
@@ -128,7 +132,7 @@ async function exportData(){
 $("exportBtn").onclick=exportData;
 $("importFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d.days!=="object")throw 0;
-    const clean={};for(const k in d.days){const v=+d.days[k];if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v>=1&&v<=4)clean[k]=v;}
+    const clean={};for(const k in d.days){const v=+d.days[k];if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v>=1&&v<=3)clean[k]=v;}
     state.days=clean;state.examples=false;if(d.rem&&/^\d{2}:\d{2}$/.test(d.rem.time))state.rem={on:!!d.rem.on,time:d.rem.time};
     save();$("backupMsg").textContent="Données restaurées ✓";renderRappel();}
   catch(err){$("backupMsg").textContent="Ce fichier n'est pas une sauvegarde de l'app.";}
