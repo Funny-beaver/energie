@@ -11,7 +11,7 @@ const MONTHS=["janvier","février","mars","avril","mai","juin","juillet","août"
 const DOW=["L","M","M","J","V","S","D"];
 const DOWL=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 
-let state={days:{},examples:false,rem:{on:true,time:"20:00"},lastRem:""};
+let state={days:{},examples:false,rem:{on:true,time:"20:00"},lastRem:"",bons:[]};
 function load(){
   try{const old=JSON.parse(localStorage.getItem("energie-v1"));
     if(old){if(old.rem&&/^\d{2}:\d{2}$/.test(old.rem.time))state.rem={on:!!old.rem.on,time:old.rem.time};localStorage.removeItem("energie-v1");}}catch(e){}
@@ -46,7 +46,7 @@ function renderNoter(){
   $("todayLabel").textContent="Aujourd'hui, "+DOWL[(t.getDay()+6)%7]+" "+t.getDate()+" "+MONTHS[t.getMonth()];
   const cur=state.days[iso(t)];
   levelButtons($("levels"),n=>{state.days[iso(new Date())]=n;save();renderNoter();
-    const L=LEVELS[n-1];$("saved").textContent="C'est noté "+L.e+" Merci !";},cur);
+    const L=LEVELS[n-1];$("saved").textContent="C'est noté "+L.e+" Merci !";celebrate();},cur);
 }
 
 let view=new Date();view.setDate(1);
@@ -113,6 +113,53 @@ function checkReminder(){
 }
 $("banner").onclick=()=>{state.lastRem=iso(new Date());save();$("banner").hidden=true;show("noter");};
 
+const GIFTS=["un bisou","un câlin","un resto","une soirée caliente","une tablette de Milka noisettes"];
+function streak(){ // jours d'affilée jusqu'à aujourd'hui (ou hier si aujourd'hui n'est pas encore noté)
+  const d=new Date();if(!state.days[iso(d)])d.setDate(d.getDate()-1);
+  let n=0;while(state.days[iso(d)]){n++;d.setDate(d.getDate()-1);}return n;
+}
+function hearts(box,emojis){
+  const h=document.createElement("div");h.className="hearts";
+  for(let i=0;i<9;i++){const sp=document.createElement("span");sp.textContent=emojis[i%emojis.length];
+    sp.style.left=(10+i*10)+"%";sp.style.animationDelay=(i*0.18)+"s";h.appendChild(sp);}
+  box.appendChild(h);
+}
+function celebrate(forced){
+  const m=$("macaron");const n=forced||streak();
+  if(!forced&&!state.days[iso(new Date())]){m.hidden=true;return;}
+  m.className="macaron";m.innerHTML="";
+  if(n>0&&n%7===0){m.classList.add("week");
+    m.innerHTML=`<span class="big">${n}</span><b>jours d'affilée !</b><span class="streak">Bravo petit cœur 🌟</span>`;
+    hearts(m,["🌟","💚","✨"]);}
+  else{m.innerHTML=`<b>Bravo petit cœur, c'est rempli pour aujourd'hui</b><span>❤❤❤</span>`+(n>1?`<span class="streak">${n} jours d'affilée</span>`:"");
+    hearts(m,["❤","💗","💕"]);}
+  [[6,14],[88,18],[12,72],[92,70],[50,8]].forEach(([x,y],i)=>{const sp=document.createElement("span");sp.className="spark";sp.textContent="✨";
+    sp.style.left=x+"%";sp.style.top=y+"%";sp.style.animationDelay=(i*0.35)+"s";m.appendChild(sp);});
+  m.hidden=false;void m.offsetWidth;m.classList.add("pop");
+  checkBon(n);
+}
+function checkBon(n){
+  if(n>0&&n%30===0&&!state.bons.some(b=>b.streakEnd===iso(new Date()))){state.bons.push({streakEnd:iso(new Date()),gift:null,sent:false});save();}
+  renderBon();
+}
+let bonPick=null;
+function renderBon(){
+  const b=state.bons.find(x=>!x.sent);const box=$("bon");
+  if(!b){box.hidden=true;return;}
+  box.hidden=false;const c=$("bonChips");c.innerHTML="";
+  GIFTS.forEach(g=>{const ch=document.createElement("button");ch.className="chip";ch.textContent="Bon pour "+g;
+    ch.setAttribute("aria-pressed",bonPick===g?"true":"false");ch.onclick=()=>{bonPick=g;renderBon();};c.appendChild(ch);});
+  $("bonSend").hidden=!bonPick;
+}
+async function sendBon(){
+  const b=state.bons.find(x=>!x.sent);if(!b||!bonPick)return;
+  const text="🎟️ Bon pour "+bonPick+" ❤ Je l'ai gagné en notant mon énergie 30 jours d'affilée !";
+  try{if(navigator.share){await navigator.share({text});b.gift=bonPick;b.sent=true;save();$("bonMsg").textContent="Envoyé ✓";bonPick=null;setTimeout(renderBon,1500);return;}}
+  catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(text);$("bonMsg").textContent="Message copié. Colle-le dans Messages.";}
+  catch(e){$("bonMsg").textContent=text;}
+}
+$("bonSend").onclick=sendBon;
 function show(v){
   ["noter","cal","rappel"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
@@ -139,4 +186,4 @@ $("importFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new 
   e.target.value="";};r.readAsText(f);};
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
-load();save();show("noter");checkReminder();setInterval(checkReminder,30000);
+load();if(!Array.isArray(state.bons))state.bons=[];save();show("noter");celebrate();checkReminder();setInterval(checkReminder,30000);

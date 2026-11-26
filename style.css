@@ -78,3 +78,34 @@ html,body{margin:0}
 :root{padding-top:env(safe-area-inset-top,0px)}
 .stack{display:flex;flex-direction:column;gap:16px}
 .stack.tight{gap:8px}
+/* encouragements */
+.macaron{position:relative;overflow:hidden;width:100%;border-radius:24px;padding:18px 20px;
+  background:linear-gradient(135deg,var(--rose),#F3D8EC 50%,var(--sky));color:#5A3046;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.macaron b{font-family:var(--display);font-size:1.2rem;line-height:1.25;position:relative}
+.macaron > span:not(.spark){position:relative;z-index:1}
+.macaron b{z-index:1}
+.hearts{z-index:0}
+.macaron .streak{font-weight:700;font-size:.95rem}
+.macaron .big{font-family:var(--display);font-size:2.2rem;line-height:1}
+.macaron.week{background:linear-gradient(135deg,#C9EBC3,#E3F5DE 50%,var(--mint));color:#2E5A2A}
+.macaron::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.75) 48%,rgba(255,255,255,.9) 50%,rgba(255,255,255,.75) 52%,transparent 70%);
+  transform:translateX(-120%);animation:shine 3.2s ease-in-out .4s infinite}
+@keyframes shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+.spark{position:absolute;font-size:.9rem;animation:twinkle 1.8s ease-in-out infinite;pointer-events:none}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+.pop{animation:pop .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.hearts{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.hearts span{position:absolute;bottom:0;font-size:1.3rem;opacity:0;animation:float 2.4s ease-out forwards}
+@keyframes float{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translateY(-110px) scale(1.1);opacity:0}}
+.bon{background:linear-gradient(135deg,#FFE7A3,var(--rose));color:#5A3046;border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:12px;border:2px dashed #E9A9C3}
+.bon h2{color:#5A3046}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:none;border-radius:999px;padding:10px 14px;font:inherit;font-weight:700;background:rgba(255,255,255,.75);color:#5A3046;cursor:pointer}
+.chip[aria-pressed="true"]{background:#5A3046;color:#fff}
+.chip:focus-visible{outline:3px solid var(--sky-ink);outline-offset:2px}
+.demo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.pop,.hearts span,.macaron::after,.spark{animation:none!important}.hearts,.macaron::after{display:none}}
+

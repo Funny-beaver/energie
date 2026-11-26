@@ -27,8 +27,16 @@
       <h1>Comment va ton énergie ?</h1>
       <p class="sub" id="todayLabel"></p>
     </div>
+    <div class="macaron" id="macaron" hidden aria-live="polite"></div>
     <div class="levels" id="levels"></div>
     <p class="saved" id="saved" aria-live="polite"></p>
+    <div class="bon" id="bon" hidden>
+      <h2 id="bonTitle">🎟️ Tu as gagné un bon !</h2>
+      <p class="note" id="bonText">30 jours d'affilée, bravo ! Choisis ton cadeau :</p>
+      <div class="chips" id="bonChips"></div>
+      <div class="row"><button class="btn" id="bonSend" hidden>Envoyer par message</button></div>
+      <p class="note" id="bonMsg" aria-live="polite"></p>
+    </div>
   </section>
 
   <!-- Commande 2 : Calendrier -->

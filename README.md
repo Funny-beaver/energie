@@ -18,6 +18,14 @@ Une petite app douce pour noter son énergie chaque jour (3 états : ↑ J’ai 
 
 Dans l'app **Raccourcis** : Automatisation → Nouvelle → **Heure de la journée** → choisir l'heure, Tous les jours, Exécuter immédiatement → action **Ouvrir les URL** avec `webapp://` (iOS 16.4 ou plus).
 
+## Encouragements
+
+- Chaque jour noté : un bandeau « Bravo petit cœur, c'est rempli pour aujourd'hui ❤❤❤ ».
+- Tous les 7 jours d'affilée : une petite fête avec le nombre de jours.
+- Tous les 30 jours d'affilée : un « bon pour… » à choisir et à envoyer par message.
+- Si un jour est oublié, le compteur repart de zéro ; les bons gagnés sont gardés.
+- Les animations sont coupées si « Réduire les animations » est activé sur l'iPhone.
+
 ## Sauvegarde
 
 Bouton **Sauvegarder** dans l'onglet Rappel : enregistre une copie (fichier .json), par exemple dans Fichiers. **Restaurer** la recharge.
