@@ -1,6 +1,6 @@
 # Mon énergie
 
-Une petite app douce pour noter son énergie chaque jour (de 1 😴 à 5 😄), la voir dans un calendrier et repérer ses cycles.
+Une petite app douce pour noter son énergie chaque jour (4 états : 😢 Pas d’énergie, 😊 Bien, 😎 Au top, 🫨 Submergé), la voir dans un calendrier et repérer ses cycles.
 
 - Aucune donnée ne quitte le téléphone : pas de compte, pas de serveur, pas de suivi.
 - Fonctionne hors ligne une fois installée.

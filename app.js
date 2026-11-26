@@ -1,11 +1,10 @@
 const LEVELS=[
-  {n:1,e:"😴",l:"Très fatigué",c:"#F8CFDD"},
-  {n:2,e:"😔",l:"Fatigué",c:"#F3D8EC"},
-  {n:3,e:"😐",l:"Moyen",c:"#BFE3F7"},
-  {n:4,e:"🙂",l:"Bien",c:"#BEE9EA"},
-  {n:5,e:"😄",l:"Plein d'énergie",c:"#BDEBDD"}
+  {n:1,e:"😢",l:"Pas d'énergie",c:"#FFD3B5"},
+  {n:2,e:"😊",l:"Bien",c:"#FFE7A3"},
+  {n:3,e:"😎",l:"Au top",c:"#C9EBC3"},
+  {n:4,e:"🫨",l:"Submergé",c:"#DCCDF4"}
 ];
-const KEY="energie-v1";
+const KEY="energie-v2"; // v2 = échelle à 4 états ; les notes v1 (1 à 5) sont effacées
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -14,7 +13,12 @@ const DOW=["L","M","M","J","V","S","D"];
 const DOWL=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 
 let state={days:{},examples:false,rem:{on:true,time:"20:00"},lastRem:""};
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.days)state=Object.assign(state,s);}catch(e){}}
+function load(){
+  try{const old=JSON.parse(localStorage.getItem("energie-v1"));
+    if(old){if(old.rem&&/^\d{2}:\d{2}$/.test(old.rem.time))state.rem={on:!!old.rem.on,time:old.rem.time};localStorage.removeItem("energie-v1");}}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.days)state=Object.assign(state,s);}catch(e){}
+  for(const k in state.days){const v=state.days[k];if(!(v>=1&&v<=4))delete state.days[k];}
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function seed(){ // exemples : un cycle doux de 7 jours, pour voir le calendrier rempli
   const t=new Date();const pat=[2,3,4,4,5,3,2];
@@ -25,7 +29,7 @@ function seed(){ // exemples : un cycle doux de 7 jours, pour voir le calendrier
 
 function levelButtons(container,onPick,current){
   container.innerHTML="";
-  LEVELS.slice().reverse().forEach(L=>{
+  LEVELS.forEach(L=>{
     const b=document.createElement("button");b.className="lvl";b.style.background=L.c;
     b.setAttribute("aria-pressed",current===L.n?"true":"false");
     b.innerHTML=`<span class="emo">${L.e}</span><span class="num">${L.n}</span><span class="lab">${L.l}</span>`;
@@ -55,7 +59,7 @@ function renderCal(){
     const b=document.createElement("button");b.className="day"+(v?" has":"")+(k===todayIso?" today":"");
     if(v)b.style.background=LEVELS[v-1].c;
     b.innerHTML=`<span>${d}</span>${v?`<span class="e">${LEVELS[v-1].e}</span>`:""}`;
-    b.setAttribute("aria-label",d+" "+MONTHS[view.getMonth()]+(v?", niveau "+v:", pas noté"));
+    b.setAttribute("aria-label",d+" "+MONTHS[view.getMonth()]+(v?", "+LEVELS[v-1].l:", pas noté"));
     if(date>new Date()){b.disabled=true;b.style.opacity=.4;}
     b.onclick=()=>openPicker(date);g.appendChild(b);
   }
@@ -65,16 +69,21 @@ function renderCal(){
   $("exampleNote").hidden=!state.examples;
 }
 function renderCycles(){
-  const sum=[0,0,0,0,0,0,0],cnt=[0,0,0,0,0,0,0];const t=new Date();
+  const cnt=DOW.map(()=>[0,0,0,0,0]);const t=new Date();
   for(let i=0;i<56;i++){const d=new Date(t);d.setDate(t.getDate()-i);const v=state.days[iso(d)];
-    if(v){const w=(d.getDay()+6)%7;sum[w]+=v;cnt[w]++;}}
-  const avg=sum.map((s,i)=>cnt[i]?s/cnt[i]:0);
-  $("bars").innerHTML=avg.map((a,i)=>`<div class="bar"><i></i><small>${DOW[i]}</small></div>`).join("");
-  $("bars").querySelectorAll(".bar i").forEach((el,i)=>el.style.height=(avg[i]?Math.max(8,avg[i]/5*90):0)+"%");
-  const have=avg.map((a,i)=>[a,i]).filter(x=>x[0]>0);
-  if(have.length<3){$("insight").textContent="Note quelques jours pour voir tes cycles.";return;}
-  have.sort((a,b)=>a[0]-b[0]);
-  $("insight").textContent="Énergie plus basse le "+DOWL[have[0][1]]+", plus haute le "+DOWL[have[have.length-1][1]]+".";
+    if(v>=1&&v<=4){const w=(d.getDay()+6)%7;cnt[w][v]++;cnt[w][0]++;}}
+  const bars=$("bars");bars.innerHTML="";
+  cnt.forEach((c,w)=>{const col=document.createElement("div");col.className="bar";
+    const st=document.createElement("div");st.className="stack4";
+    [4,3,2,1].forEach(n=>{if(!c[n])return;const seg=document.createElement("i");seg.style.background=LEVELS[n-1].c;seg.style.height=(c[n]/c[0]*100)+"%";st.appendChild(seg);});
+    const lab=document.createElement("small");lab.textContent=DOW[w];col.appendChild(st);col.appendChild(lab);bars.appendChild(col);});
+  const days=cnt.filter(c=>c[0]).length;
+  if(days<3){$("insight").textContent="Note quelques jours pour voir tes cycles.";return;}
+  const best=n=>{let bi=-1,br=0;cnt.forEach((c,w)=>{if(c[0]&&c[n]/c[0]>br){br=c[n]/c[0];bi=w;}});return bi;};
+  const parts=[];const low=best(1),over=best(4);
+  if(low>=0)parts.push(LEVELS[0].e+" Pas d'énergie surtout le "+DOWL[low]+".");
+  if(over>=0)parts.push(LEVELS[3].e+" Submergé surtout le "+DOWL[over]+".");
+  $("insight").textContent=parts.join(" ")||"Pas de jour plus difficile repéré.";
 }
 let pickDate=null;
 function openPicker(date){
@@ -119,7 +128,7 @@ async function exportData(){
 $("exportBtn").onclick=exportData;
 $("importFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d.days!=="object")throw 0;
-    const clean={};for(const k in d.days){const v=+d.days[k];if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v>=1&&v<=5)clean[k]=v;}
+    const clean={};for(const k in d.days){const v=+d.days[k];if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v>=1&&v<=4)clean[k]=v;}
     state.days=clean;state.examples=false;if(d.rem&&/^\d{2}:\d{2}$/.test(d.rem.time))state.rem={on:!!d.rem.on,time:d.rem.time};
     save();$("backupMsg").textContent="Données restaurées ✓";renderRappel();}
   catch(err){$("backupMsg").textContent="Ce fichier n'est pas une sauvegarde de l'app.";}
